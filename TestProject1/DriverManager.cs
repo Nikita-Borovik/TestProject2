@@ -1,0 +1,34 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium;
+
+namespace TestProjectCore
+{
+    public sealed class DriverManager
+    {
+        private static ThreadLocal<IWebDriver> driver = new ThreadLocal<IWebDriver>();
+
+        private DriverManager() { }
+
+        public static IWebDriver SetDriver()
+        {
+            if (driver.Value == null)
+            {
+                var options = new ChromeOptions();
+                options.AddArgument("--headless=new");
+                driver.Value = new ChromeDriver(options);
+            }
+            return driver.Value;
+        }
+
+        public static void Teardown()
+        {
+            driver.Value?.Quit();
+            driver.Value?.Dispose();
+        }
+    }
+}
