@@ -4,6 +4,9 @@ using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Interactions;
 using TestProjectCore;
 using TestProject1;
+using Serilog;
+using Shouldly;
+
 [assembly: Parallelizable(ParallelScope.Fixtures)]
 
 namespace TestProject
@@ -19,14 +22,26 @@ namespace TestProject
         {
             var mainPage = new MainPage(driver);
 
+            LogStep("Opening Home Page");
             mainPage.OpenHomePage();
+
+            LogStep("Navigating to About Page");
             mainPage.OpenAboutPage();
 
-            Assert.Multiple(() =>
+            LogStep("Validating URL and Title");
+
+            try
             {
-                Assert.That(driver.Url, Is.EqualTo(expectedUrl));
-                Assert.That(driver.Title, Is.EqualTo(expectedTitle));
-            });
+                driver.Url.ShouldBe(expectedUrl);
+                driver.Title.ShouldBe(expectedTitle);
+                Logger.Information("Test passed.");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "Test failed!");
+                CaptureScreenshot("Test1_Failure");
+                throw;
+            }
         }
     }
 
@@ -41,11 +56,28 @@ namespace TestProject
             var mainPage = new MainPage(driver);
             var searchingRequest = "study programs";
 
+            LogStep("Opening Home Page");
             mainPage.OpenHomePage();
+
+            LogStep("Make Searching Request");
             mainPage.OpenSearchingRequest(searchingRequest);
+
+            LogStep("Submit Searching Form");
             mainPage.ClickSubmitButton();
 
-            Assert.That(driver.Url, Does.Contain(expectedPart));
+            LogStep("Validating Searching Page");
+
+            try
+            {
+                driver.Url.ShouldContain(expectedPart);
+                Logger.Information("Test passed.");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "Test failed!");
+                CaptureScreenshot("Test2_Failure");
+                throw;
+            }
         }
     }
 
@@ -59,10 +91,25 @@ namespace TestProject
         {
             var mainPage = new MainPage(driver);
 
+            LogStep("Opening Home Page");
             mainPage.OpenHomePage();
+
+            LogStep("Change Language To Lithuanian");
             mainPage.ChangeLanguageToLT();
 
-            Assert.That(driver.Url, Is.EqualTo(expectedUrl));
+            LogStep("Validating URL");
+
+            try
+            {
+                driver.Url.ShouldBe(expectedUrl);
+                Logger.Information("Test passed.");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "Test failed!");
+                CaptureScreenshot("Test3_Failure");
+                throw;
+            }
         }
     }
 
@@ -76,15 +123,28 @@ namespace TestProject
         {
             var contactPage = new ContactPage(driver);
 
+            LogStep("Opening Contact Page");
             contactPage.OpenContactPage();
 
-            Assert.Multiple(() =>
+            LogStep("Validating contact information");
+
+            try
             {
-                Assert.That(contactPage.GetEmail, Is.EqualTo(email));
-                Assert.That(contactPage.GetPhoneLT, Is.EqualTo(phoneLt));
-                Assert.That(contactPage.GetPhoneBY, Is.EqualTo(phoneBy));
-                Assert.That(contactPage.GetSocialNet, Is.EqualTo(social));
-            });
+                contactPage.GetEmail().ShouldBe(email);
+                Logger.Information("Test passed.");
+                contactPage.GetPhoneLT().ShouldBe(phoneLt);
+                Logger.Information("Test passed.");
+                contactPage.GetPhoneBY().ShouldBe(phoneBy);
+                Logger.Information("Test passed.");
+                contactPage.GetSocialNet().ShouldBe(social);
+                Logger.Information("Test passed.");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "Test failed!");
+                CaptureScreenshot("Test4_Failure");
+                throw;
+            }
         }
     }
 

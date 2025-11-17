@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using DiffEngine;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 
@@ -16,16 +12,17 @@ namespace TestProject2
 
         public static IWebDriver SetDriver()
         {
-            if (driver.Value == null) 
+            if (driver.Value == null)
             {
                 var options = new ChromeOptions();
                 options.AddArgument("--headless=new");
+
                 driver.Value = new ChromeDriver(options);
             }
             return driver.Value;
         }
 
-        public void QuitDriver()
+        public static void Teardown()
         {
             driver.Value?.Quit();
             driver.Value?.Dispose();
