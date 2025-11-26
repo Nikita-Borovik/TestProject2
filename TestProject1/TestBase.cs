@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,10 +16,12 @@ namespace TestProject1
         protected IWebDriver driver => DriverManager.SetDriver();
         protected Serilog.ILogger Logger;
         private readonly string testId = Guid.NewGuid().ToString("N");
+        private Stopwatch testStopwatch;
 
         [SetUp]
         public void Setup()
         {
+            testStopwatch = Stopwatch.StartNew();
             Logger = LogManager.CreateLogger(testId);
             Logger.Information("===== TEST STARTED ({TestId}) =====", testId);
         }
@@ -31,13 +34,32 @@ namespace TestProject1
         [TearDown]
         public void Teardown()
         {
-            if (TestContext.CurrentContext.Result.Outcome.Status == TestStatus.Failed)
+            testStopwatch?.Stop();
+            var testResult = TestContext.CurrentContext.Result;
+            var status = testResult.Outcome.Status;
+            var message = testResult.Message;
+            var duration = testStopwatch?.Elapsed ?? TimeSpan.Zero;
+
+            var testName = TestContext.CurrentContext.Test.Name;
+            if (testName.Contains("("))
+            {
+                testName = testName.Substring(0, testName.IndexOf("("));
+            }
+            TestReportGenerator.RecordTestResult(
+                testName,
+                status,
+                message,
+                duration
+            );
+
+            if (status == TestStatus.Failed)
             {
                 CaptureScreenshot(TestContext.CurrentContext.Test.Name);
-                Logger.Error("TEST FAILED: " + TestContext.CurrentContext.Result.Message);
+                Logger.Error("TEST FAILED: " + message);
             }
 
             Logger.Information("===== TEST FINISHED ({TestId}) =====", testId);
+            Logger.Information("Test duration: {Duration} ms", duration.TotalMilliseconds);
 
             DriverManager.Teardown();
         }

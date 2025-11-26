@@ -6,42 +6,56 @@ using TestProjectCore;
 using TestProject1;
 using Serilog;
 using Shouldly;
+using Allure.Net.Commons;
+using Allure.NUnit.Attributes;
+using Allure.NUnit;
 
 [assembly: Parallelizable(ParallelScope.Fixtures)]
 
 namespace TestProject
 {
 
+    [SetUpFixture]
+    public class TestSuiteSetup
+    {
+        [OneTimeSetUp]
+        public void OneTimeSetup()
+        {
+            TestReportGenerator.SetSuiteStartTime();
+        }
+
+        [OneTimeTearDown]
+        public void OneTimeTeardown()
+        {
+            TestReportGenerator.SetSuiteEndTime();
+            TestReportGenerator.GenerateReport();
+        }
+    }
+
     [TestFixture]
+    [AllureNUnit]
     public class Tests : TestBase
     {
         [Test]
         [Category("Regression")]
-        [TestCase("https://en.ehuniversity.lt/about/", "About")]
-        public void Test1(string expectedUrl, string expectedTitle)
+        [AllureTag("FailingTest")]
+        public void Test2_Failing()
         {
-            var mainPage = new MainPage(driver);
+            LogStep("Выполнение теста, который должен провалиться");
+            
+            Assert.That(2 + 2, Is.EqualTo(5), "Этот тест намеренно проваливается");
+            Logger.Information("This should not be reached.");
+        }
 
-            LogStep("Opening Home Page");
-            mainPage.OpenHomePage();
-
-            LogStep("Navigating to About Page");
-            mainPage.OpenAboutPage();
-
-            LogStep("Validating URL and Title");
-
-            try
-            {
-                driver.Url.ShouldBe(expectedUrl);
-                driver.Title.ShouldBe(expectedTitle);
-                Logger.Information("Test passed.");
-            }
-            catch (Exception ex)
-            {
-                Logger.Error(ex, "Test failed!");
-                CaptureScreenshot("Test1_Failure");
-                throw;
-            }
+        [Test]
+        [Category("Regression")]
+        [AllureTag("InconclusiveTest")]
+        public void Test3_Inconclusive()
+        {
+            LogStep("Выполнение теста со статусом Inconclusive");
+            
+            Assert.Inconclusive("Этот тест помечен как Inconclusive для демонстрации");
+            Logger.Information("This should not be reached.");
         }
     }
 
